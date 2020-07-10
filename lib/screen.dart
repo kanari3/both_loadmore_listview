@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'model.dart';
 
 class LoadMoreScreen extends StatelessWidget {
@@ -20,6 +19,12 @@ class LoadMoreScreen extends StatelessWidget {
               actions: <Widget>[
                 IconButton(
                   icon: Icon(Icons.refresh),
+                  onPressed: () {
+                    model.refresh();
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.art_track),
                   onPressed: () {
                     model.refresh();
                   },

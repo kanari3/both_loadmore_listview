@@ -23,8 +23,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^0.1.3
-  provider: any
+  cupertino_icons:
+  provider:
 
 dev_dependencies:
   flutter_test:

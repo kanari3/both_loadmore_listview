@@ -1,8 +1,5 @@
-
 import 'package:both_loadmore_listview/repository.dart';
 import 'package:flutter/cupertino.dart';
-
-import 'main.dart';
 
 class LoadMoreModel extends ChangeNotifier {
 
@@ -15,6 +12,7 @@ class LoadMoreModel extends ChangeNotifier {
   int offset;
   final scrollController = ScrollController();
   bool loading = false;
+  bool loadingReverse = false;
 
   LoadMoreModel() {
     setListener();
@@ -30,7 +28,23 @@ class LoadMoreModel extends ChangeNotifier {
       if (max == offset) {
         loadMore();
       }
+
+      if (min == offset) {
+        loadMoreReverse();
+      }
+
     });
+  }
+
+  loadMoreReverse() async {
+    if (!loading) {
+      loading = true;
+      notifyListeners();
+
+      await getDataReverse();
+      loading = false;
+      notifyListeners();
+    }
   }
 
   loadMore() async {
@@ -52,10 +66,22 @@ class LoadMoreModel extends ChangeNotifier {
     return data;
   }
 
+  Future<void> getDataReverse() async {
+    try {
+      final fetch = await _repository.fetchDataReverse(limit: limit, offset: offset);
+      data = fetch + data;
+      limit += pagination;
+      offset += pagination;
+    } catch (err) {
+    } finally {
+      notifyListeners();
+    }
+  }
+
   Future<void> getData() async {
     try {
-      final notify = await _repository.fetchData(limit: limit, offset: offset);
-      data += notify;
+      final fetch = await _repository.fetchData(limit: limit, offset: offset);
+      data += fetch;
       limit += pagination;
       offset += pagination;
     } catch (err) {
