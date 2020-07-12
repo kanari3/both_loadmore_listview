@@ -5,7 +5,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'model.dart';
 
 class LoadMoreScreen extends StatelessWidget {
-
+  GlobalKey<State> key = new GlobalKey();
   LoadMoreModel loadMoreModel;
 
   Widget get jumpControlButtons => Row(
@@ -92,42 +92,60 @@ class LoadMoreScreen extends StatelessWidget {
 
                   Expanded(
                     child: RefreshIndicator(
-                      child: ScrollablePositionedList.builder(
-                        itemCount: model.data.length + 1,
-                        itemBuilder: (context, index) {
+                      child: NotificationListener<ScrollNotification>(
+                        child: ScrollablePositionedList.builder(
+                          itemCount: model.data.length + 1,
+                          itemBuilder: (context, index) {
 
 
-                          if (model.data.isEmpty) {
-                            return  Center(child: CircularProgressIndicator());
-                          }
+                            if (model.data.isEmpty) {
+                              return  Center(child: CircularProgressIndicator());
+                            }
 
-                          // display listview data
-                          if (index < model.data.length) {
-                            final item = model.data[index];
-                            return ListTile(
-                              title: Text(item),
+                            // display listview data
+                            if (index < model.data.length) {
+                              final item = model.data[index];
+                              return ListTile(
+                                title: Text(item),
+                              );
+                            }
+
+                            // when data length is exceeded
+                            return Center(
+                              child: Opacity(
+                                opacity: model.loading ? 1.0 : 0.0,
+                                child: CircularProgressIndicator(),
+                              ),
                             );
+
+                          },
+                          itemScrollController: loadMoreModel.itemScrollController,
+                          itemPositionsListener: loadMoreModel.itemPositionsListener,
+                          scrollDirection: Axis.vertical,
+                        ),
+
+
+                        onNotification: (ScrollNotification scrollInfo) {
+
+                          if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+                            model.loadMore();
+                            return true;
                           }
 
-                          // when data length is exceeded
-                          return Center(
-                            child: Opacity(
-                              opacity: model.loading ? 1.0 : 0.0,
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
+                          if (scrollInfo.metrics.pixels == scrollInfo.metrics.minScrollExtent) {
+                            model.loadMoreReverse();
+                            return true;
+                          }
 
+                          return false;
                         },
-                        itemScrollController: loadMoreModel.itemScrollController,
-                        itemPositionsListener: loadMoreModel.itemPositionsListener,
-                        scrollDirection: Axis.vertical,
+
                       ),
                       onRefresh: () async {
                         await model.refresh();
                       },
                     ),
                   ),
-
 
                 ],
               ),
@@ -136,4 +154,5 @@ class LoadMoreScreen extends StatelessWidget {
         }
     );
   }
+
 }

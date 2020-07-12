@@ -1,10 +1,6 @@
-import 'dart:math';
-
 import 'package:both_loadmore_listview/repository.dart';
-import 'package:both_loadmore_listview/screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-
 
 class LoadMoreModel extends ChangeNotifier {
 
@@ -15,7 +11,6 @@ class LoadMoreModel extends ChangeNotifier {
   final int pagination = 20;
   int limit;
   int offset;
-  final scrollController = ScrollController();
   bool loading = false;
   bool loadingReverse = false;
 
@@ -23,24 +18,7 @@ class LoadMoreModel extends ChangeNotifier {
   final itemPositionsListener = ItemPositionsListener.create();
 
   LoadMoreModel() {
-    setListener();
     refresh();
-  }
-
-  setListener() {
-    scrollController.addListener(() {
-      final max = scrollController.position.maxScrollExtent;
-      final min = scrollController.position.minScrollExtent;
-      final offset = scrollController.offset;
-
-      if (max == offset) {
-        loadMore();
-      }
-
-      if (min == offset) {
-        loadMoreReverse();
-      }
-    });
   }
 
   loadMoreReverse() async {
@@ -97,9 +75,4 @@ class LoadMoreModel extends ChangeNotifier {
     }
   }
 
-  @override
-  void dispose() {
-    scrollController.dispose();
-    super.dispose();
-  }
 }
