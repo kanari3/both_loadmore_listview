@@ -1,5 +1,10 @@
+import 'dart:math';
+
 import 'package:both_loadmore_listview/repository.dart';
+import 'package:both_loadmore_listview/screen.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
 
 class LoadMoreModel extends ChangeNotifier {
 
@@ -13,6 +18,10 @@ class LoadMoreModel extends ChangeNotifier {
   final scrollController = ScrollController();
   bool loading = false;
   bool loadingReverse = false;
+
+//2
+  final itemScrollController = ItemScrollController();
+  final itemPositionsListener = ItemPositionsListener.create();
 
   LoadMoreModel() {
     setListener();

@@ -25,6 +25,7 @@ dependencies:
     sdk: flutter
   cupertino_icons:
   provider:
+  scrollable_positioned_list:
 
 dev_dependencies:
   flutter_test:
