@@ -19,7 +19,6 @@ class LoadMoreModel extends ChangeNotifier {
   bool loading = false;
   bool loadingReverse = false;
 
-//2
   final itemScrollController = ItemScrollController();
   final itemPositionsListener = ItemPositionsListener.create();
 
@@ -41,7 +40,6 @@ class LoadMoreModel extends ChangeNotifier {
       if (min == offset) {
         loadMoreReverse();
       }
-
     });
   }
 
