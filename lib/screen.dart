@@ -1,34 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'model.dart';
 
 class LoadMoreScreen extends StatelessWidget {
-  GlobalKey<State> key = new GlobalKey();
+  GlobalKey<State> key = GlobalKey();
   LoadMoreModel loadMoreModel;
 
-  Widget get jumpControlButtons => Row(
-    children: <Widget>[
-      const Text('jump to'),
-      jumpButton(0),
-      jumpButton(5),
-      jumpButton(10),
-      jumpButton(100),
-      jumpButton(1000),
-    ],
-  );
-
-  Widget jumpButton(int value) => GestureDetector(
-    key: ValueKey<String>('Jump$value'),
-    onTap: () => jumpTo(value),
-    child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Text('$value')),
-  );
-
-  void jumpTo(int index) =>
-      loadMoreModel.itemScrollController.jumpTo(index: index);
+  loaded() {
+    if (!loadMoreModel.firstLoad) {
+      print("first load");
+//      jumpTo(2);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +22,8 @@ class LoadMoreScreen extends StatelessWidget {
 
     return Consumer<LoadMoreModel>(
         builder: (context, model, _) {
-
           loadMoreModel = model;
+          model.callBack = loaded();
 
           return Scaffold(
             appBar: AppBar(
@@ -45,14 +31,18 @@ class LoadMoreScreen extends StatelessWidget {
               actions: <Widget>[
                 IconButton(
                   icon: Icon(Icons.refresh),
-                  onPressed: () {
-                    model.refresh();
-                  },
-                ),
-                IconButton(
-                  icon: Icon(Icons.art_track),
-                  onPressed: () {
-                    model.refresh();
+                  onPressed: () async {
+
+                    Fluttertoast.showToast(
+                        msg: "refresh",
+                        toastLength: Toast.LENGTH_SHORT,
+                        gravity: ToastGravity.BOTTOM,
+                        timeInSecForIosWeb: 1,
+                        backgroundColor: Colors.grey,
+                        textColor: Colors.white,
+                        fontSize: 16.0
+                    );
+                    await refresh();
                   },
                 ),
               ],
@@ -72,6 +62,15 @@ class LoadMoreScreen extends StatelessWidget {
                     ],
                   ),
 
+                  Row(
+                    children: <Widget>[
+                      Column(
+                        children: <Widget>[
+                          jumpLogicalControlButtons,
+                        ],
+                      ),
+                    ],
+                  ),
 
                   // header
                   Container(
@@ -89,14 +88,12 @@ class LoadMoreScreen extends StatelessWidget {
                   ),
                   // header end
 
-
                   Expanded(
                     child: RefreshIndicator(
                       child: NotificationListener<ScrollNotification>(
                         child: ScrollablePositionedList.builder(
                           itemCount: model.data.length + 1,
                           itemBuilder: (context, index) {
-
 
                             if (model.data.isEmpty) {
                               return  Center(child: CircularProgressIndicator());
@@ -127,14 +124,33 @@ class LoadMoreScreen extends StatelessWidget {
 
                         onNotification: (ScrollNotification scrollInfo) {
 
+                          // positive load more
                           if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
                             model.loadMore();
                             return true;
                           }
 
+                          // negative load more
                           if (scrollInfo.metrics.pixels == scrollInfo.metrics.minScrollExtent) {
-                            model.loadMoreReverse();
-                            return true;
+
+                            if (model.minPositionJumpFlag == 0) {
+                              model.minPositionJumpFlag = 1;
+                              model.loadMoreReverse().then((value) {
+
+                                Fluttertoast.showToast(
+                                    msg: "jump to zero position",
+                                    toastLength: Toast.LENGTH_SHORT,
+                                    gravity: ToastGravity.BOTTOM,
+                                    timeInSecForIosWeb: 1,
+                                    backgroundColor: Colors.grey,
+                                    textColor: Colors.white,
+                                    fontSize: 16.0
+                                );
+
+                                jumpTo(model.logicalZeroPosition);
+                              });
+                              return true;
+                            }
                           }
 
                           return false;
@@ -142,7 +158,7 @@ class LoadMoreScreen extends StatelessWidget {
 
                       ),
                       onRefresh: () async {
-                        await model.refresh();
+                        await refresh();
                       },
                     ),
                   ),
@@ -154,5 +170,39 @@ class LoadMoreScreen extends StatelessWidget {
         }
     );
   }
+
+  refresh() async {
+    await loadMoreModel.refresh();
+    loadMoreModel.firstLoad = false;
+    jumpTo(0);
+  }
+
+  Widget get jumpControlButtons => Row(
+    children: <Widget>[
+      const Text('jump to (physics)'),
+      jumpButton(0),
+      jumpButton(5),
+      jumpButton(10),
+      jumpButton(100),
+    ],
+  );
+
+  Widget get jumpLogicalControlButtons => Row(
+    children: <Widget>[
+      const Text('jump to (logical zero position)'),
+      jumpButton(loadMoreModel.logicalZeroPosition),
+    ],
+  );
+
+  Widget jumpButton(int value) => GestureDetector(
+    key: ValueKey<String>('Jump$value'),
+    onTap: () => jumpTo(value),
+    child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Text('$value')),
+  );
+
+  void jumpTo(int index) =>
+      loadMoreModel.itemScrollController.jumpTo(index: index);
 
 }

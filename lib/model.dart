@@ -4,6 +4,12 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class LoadMoreModel extends ChangeNotifier {
 
+  bool firstLoad = false;
+  int minPositionJumpFlag = 0;
+  int logicalZeroPosition = 0;
+
+  void Function() callBack;
+  
   var _repository = LoadMoreRepository();
 
   List<String> data = [];
@@ -21,17 +27,6 @@ class LoadMoreModel extends ChangeNotifier {
     refresh();
   }
 
-  loadMoreReverse() async {
-    if (!loading) {
-      loading = true;
-      notifyListeners();
-
-      await getDataReverse();
-      loading = false;
-      notifyListeners();
-    }
-  }
-
   loadMore() async {
     if (!loading) {
       loading = true;
@@ -43,18 +38,32 @@ class LoadMoreModel extends ChangeNotifier {
     }
   }
 
+  loadMoreReverse() async {
+    if (!loading) {
+      loading = true;
+      notifyListeners();
+
+      await getDataReverse();
+      loading = false;
+      notifyListeners();
+    }
+  }
+
   Future<List<String>> refresh() async {
     data.clear();
+    minPositionJumpFlag = 0;
     limit = pagination;
     offset = 0;
     await getData();
+
+    callBack();
     return data;
   }
 
-  Future<void> getDataReverse() async {
+  Future<void> getData() async {
     try {
-      final fetch = await _repository.fetchDataReverse(limit: limit, offset: offset);
-      data = fetch + data;
+      final fetch = await _repository.fetchData(limit: limit, offset: offset);
+      data += fetch;
       limit += pagination;
       offset += pagination;
     } catch (err) {
@@ -63,10 +72,11 @@ class LoadMoreModel extends ChangeNotifier {
     }
   }
 
-  Future<void> getData() async {
+  Future<void> getDataReverse() async {
     try {
-      final fetch = await _repository.fetchData(limit: limit, offset: offset);
-      data += fetch;
+      final fetch = await _repository.fetchDataReverse(limit: limit, offset: offset);
+      logicalZeroPosition += fetch.length;
+      data = fetch + data;
       limit += pagination;
       offset += pagination;
     } catch (err) {

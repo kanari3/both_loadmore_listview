@@ -26,6 +26,7 @@ dependencies:
   cupertino_icons:
   provider:
   scrollable_positioned_list:
+  fluttertoast: 4.0.1
 
 dev_dependencies:
   flutter_test:
