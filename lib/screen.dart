@@ -9,13 +9,6 @@ class LoadMoreScreen extends StatelessWidget {
   GlobalKey<State> key = GlobalKey();
   LoadMoreModel loadMoreModel;
 
-  loaded() {
-    if (!loadMoreModel.firstLoad) {
-      print("first load");
-//      jumpTo(2);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -23,7 +16,6 @@ class LoadMoreScreen extends StatelessWidget {
     return Consumer<LoadMoreModel>(
         builder: (context, model, _) {
           loadMoreModel = model;
-          model.callBack = loaded();
 
           return Scaffold(
             appBar: AppBar(
@@ -92,7 +84,7 @@ class LoadMoreScreen extends StatelessWidget {
                     child: RefreshIndicator(
                       child: NotificationListener<ScrollNotification>(
                         child: ScrollablePositionedList.builder(
-                          itemCount: model.data.length + 1,
+                          itemCount: model.data.length + 2,
                           itemBuilder: (context, index) {
 
                             if (model.data.isEmpty) {
@@ -121,55 +113,52 @@ class LoadMoreScreen extends StatelessWidget {
                           scrollDirection: Axis.vertical,
                         ),
 
-
+                        // Get ScrollInfo
                         onNotification: (ScrollNotification scrollInfo) {
 
+                          // 上下どちらにスクロールしているか判定
+                          if(scrollInfo.metrics.pixels - model.position >= model.sensitivityFactor){
+                            print('Axis Scroll Direction : Up');
+                            model.position = scrollInfo.metrics.pixels;
+                            model.positiveScroll = true;
+                          }
+                          if (model.position - scrollInfo.metrics.pixels >= model.sensitivityFactor){
+                            print('Axis Scroll Direction : Down');
+                            model.position = scrollInfo.metrics.pixels;
+                            model.positiveScroll = false;
+                          }
 
-                          print(scrollInfo.metrics.viewportDimension.toString());
-
-
-                          model.pixel1 = scrollInfo.metrics.pixels;
-                          if (model.pixel1 < model.pixel2) {
-                            print("pppp1");
+                          // 上下端で追加読み込み (LoadMore)
+                          if (model.positiveScroll) {
+                            // positive load more
+                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+                              model.loadMore();
+                            }
                           } else {
-                            print("pppp2");
-                          }
+                            // negative load more
+                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.minScrollExtent) {
+                              if (!model.positionJumpLock) {
+                                // 連続で入るので読み込み後jumpするまでLock
+                                model.positionJumpLock = true;
+                                model.loadMoreReverse().then((_) {
 
-                          if (scrollInfo.metrics.axisDirection==AxisDirection.up) {
-                            print("asis direction up");
-                          }
+                                  Fluttertoast.showToast(
+                                      msg: "Loaded more items\njump to zero position",
+                                      toastLength: Toast.LENGTH_SHORT,
+                                      gravity: ToastGravity.BOTTOM,
+                                      timeInSecForIosWeb: 1,
+                                      backgroundColor: Colors.grey,
+                                      textColor: Colors.white,
+                                      fontSize: 14
+                                  );
 
-
-                          // positive load more
-                          if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-                            model.loadMore();
-                            return true;
-                          }
-
-                          // negative load more
-                          if (scrollInfo.metrics.pixels == scrollInfo.metrics.minScrollExtent) {
-
-                            if (model.minPositionJumpFlag == 0) {
-                              model.minPositionJumpFlag = 1;
-                              model.loadMoreReverse().then((value) {
-
-                                Fluttertoast.showToast(
-                                    msg: "jump to zero position",
-                                    toastLength: Toast.LENGTH_SHORT,
-                                    gravity: ToastGravity.BOTTOM,
-                                    timeInSecForIosWeb: 1,
-                                    backgroundColor: Colors.grey,
-                                    textColor: Colors.white,
-                                    fontSize: 16.0
-                                );
-
-                                jumpTo(model.logicalZeroPosition);
-                              });
-                              return true;
+                                  jumpTo(model.logicalZeroPosition);
+                                  model.positionJumpLock = false;
+                                });
+                              }
                             }
                           }
-
-                          return false;
+                          return true;
                         },
 
                       ),
@@ -189,7 +178,6 @@ class LoadMoreScreen extends StatelessWidget {
 
   refresh() async {
     await loadMoreModel.refresh();
-    loadMoreModel.firstLoad = false;
     jumpTo(0);
   }
 

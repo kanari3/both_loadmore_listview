@@ -4,14 +4,13 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 class LoadMoreModel extends ChangeNotifier {
 
-  bool firstLoad = false;
-  int minPositionJumpFlag = 0;
+  double position = 0.0 ;
+  double sensitivityFactor = 20.0 ;
+  // 下方向にスクロールしているか
+  bool positiveScroll = true;
+  bool positionJumpLock = false;
   int logicalZeroPosition = 0;
 
-  double pixel1 = 0;
-  double pixel2 = 0;
-  void Function() callBack;
-  
   var _repository = LoadMoreRepository();
 
   List<String> data = [];
@@ -53,12 +52,10 @@ class LoadMoreModel extends ChangeNotifier {
 
   Future<List<String>> refresh() async {
     data.clear();
-    minPositionJumpFlag = 0;
+    positionJumpLock = false;
     limit = pagination;
     offset = 0;
     await getData();
-
-    callBack();
     return data;
   }
 
@@ -77,7 +74,12 @@ class LoadMoreModel extends ChangeNotifier {
   Future<void> getDataReverse() async {
     try {
       final fetch = await _repository.fetchDataReverse(limit: limit, offset: offset);
-      logicalZeroPosition += fetch.length;
+
+      // 読み込んだ分jumpして見た目が変化しないようにする
+      logicalZeroPosition = fetch.length;
+      // ↓だと毎回初期値に戻ってしまう
+      // logicalZeroPosition += fetch.length;
+
       data = fetch + data;
       limit += pagination;
       offset += pagination;
