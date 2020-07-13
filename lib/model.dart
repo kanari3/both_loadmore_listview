@@ -8,6 +8,8 @@ class LoadMoreModel extends ChangeNotifier {
   int minPositionJumpFlag = 0;
   int logicalZeroPosition = 0;
 
+  double pixel1 = 0;
+  double pixel2 = 0;
   void Function() callBack;
   
   var _repository = LoadMoreRepository();

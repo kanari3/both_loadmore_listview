@@ -124,6 +124,22 @@ class LoadMoreScreen extends StatelessWidget {
 
                         onNotification: (ScrollNotification scrollInfo) {
 
+
+                          print(scrollInfo.metrics.viewportDimension.toString());
+
+
+                          model.pixel1 = scrollInfo.metrics.pixels;
+                          if (model.pixel1 < model.pixel2) {
+                            print("pppp1");
+                          } else {
+                            print("pppp2");
+                          }
+
+                          if (scrollInfo.metrics.axisDirection==AxisDirection.up) {
+                            print("asis direction up");
+                          }
+
+
                           // positive load more
                           if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
                             model.loadMore();
