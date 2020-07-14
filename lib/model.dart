@@ -10,6 +10,7 @@ class LoadMoreModel extends ChangeNotifier {
   bool positiveScroll = true;
   bool positionJumpLock = false;
   int logicalZeroPosition = 0;
+  int globalZeroPosition = 0;
 
   var _repository = LoadMoreRepository();
 
@@ -75,10 +76,8 @@ class LoadMoreModel extends ChangeNotifier {
     try {
       final fetch = await _repository.fetchDataReverse(limit: limit, offset: offset);
 
-      // 読み込んだ分jumpして見た目が変化しないようにする
       logicalZeroPosition = fetch.length;
-      // ↓だと毎回初期値に戻ってしまう
-      // logicalZeroPosition += fetch.length;
+      globalZeroPosition += fetch.length;
 
       data = fetch + data;
       limit += pagination;

@@ -84,7 +84,7 @@ class LoadMoreScreen extends StatelessWidget {
                     child: RefreshIndicator(
                       child: NotificationListener<ScrollNotification>(
                         child: ScrollablePositionedList.builder(
-                          itemCount: model.data.length + 2,
+                          itemCount: model.data.length + 1,
                           itemBuilder: (context, index) {
 
                             if (model.data.isEmpty) {
@@ -194,7 +194,7 @@ class LoadMoreScreen extends StatelessWidget {
   Widget get jumpLogicalControlButtons => Row(
     children: <Widget>[
       const Text('jump to (logical zero position)'),
-      jumpButton(loadMoreModel.logicalZeroPosition),
+      jumpButton(loadMoreModel.globalZeroPosition),
     ],
   );
 
