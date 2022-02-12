@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'model.dart';
 
+// ignore: must_be_immutable
 class LoadMoreScreen extends StatelessWidget {
-  GlobalKey<State> key = GlobalKey();
   LoadMoreModel loadMoreModel;
 
   @override
@@ -24,16 +24,7 @@ class LoadMoreScreen extends StatelessWidget {
                 IconButton(
                   icon: Icon(Icons.refresh),
                   onPressed: () async {
-
-                    Fluttertoast.showToast(
-                        msg: "refresh",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.BOTTOM,
-                        timeInSecForIosWeb: 1,
-                        backgroundColor: Colors.grey,
-                        textColor: Colors.white,
-                        fontSize: 16.0
-                    );
+                    showToast("refresh");
                     await refresh();
                   },
                 ),
@@ -43,26 +34,9 @@ class LoadMoreScreen extends StatelessWidget {
             body: Center(
               child: Column(
                 children: <Widget>[
-
-                  Row(
-                    children: <Widget>[
-                      Column(
-                        children: <Widget>[
-                          jumpControlButtons,
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  Row(
-                    children: <Widget>[
-                      Column(
-                        children: <Widget>[
-                          jumpLogicalControlButtons,
-                        ],
-                      ),
-                    ],
-                  ),
+                  // jump buttons
+                  jumpControlButtons,
+                  jumpLogicalControlButtons,
 
                   // header
                   Container(
@@ -72,14 +46,14 @@ class LoadMoreScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
                         Container(
-                            child: Text("header contents"),
-                            margin: EdgeInsets.only(left: 16)
+                          child: Text("header contents"),
+                          margin: EdgeInsets.only(left: 16),
                         ),
                       ],
                     ),
                   ),
-                  // header end
 
+                  // scroll view
                   Expanded(
                     child: RefreshIndicator(
                       child: NotificationListener<ScrollNotification>(
@@ -114,53 +88,7 @@ class LoadMoreScreen extends StatelessWidget {
                         ),
 
                         // Get ScrollInfo
-                        onNotification: (ScrollNotification scrollInfo) {
-
-                          // 上下どちらにスクロールしているか判定
-                          if(scrollInfo.metrics.pixels - model.position >= model.sensitivityFactor){
-                            print('Axis Scroll Direction : Up');
-                            model.position = scrollInfo.metrics.pixels;
-                            model.positiveScroll = true;
-                          }
-                          if (model.position - scrollInfo.metrics.pixels >= model.sensitivityFactor){
-                            print('Axis Scroll Direction : Down');
-                            model.position = scrollInfo.metrics.pixels;
-                            model.positiveScroll = false;
-                          }
-
-                          // 上下端で追加読み込み (LoadMore)
-                          if (model.positiveScroll) {
-                            // positive load more
-                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-                              model.loadMore();
-                            }
-                          } else {
-                            // negative load more
-                            if (scrollInfo.metrics.pixels == scrollInfo.metrics.minScrollExtent) {
-                              if (!model.positionJumpLock) {
-                                // 連続で入るので読み込み後jumpするまでLock
-                                model.positionJumpLock = true;
-                                model.loadMoreReverse().then((_) {
-
-                                  Fluttertoast.showToast(
-                                      msg: "Loaded more items\njump to zero position",
-                                      toastLength: Toast.LENGTH_SHORT,
-                                      gravity: ToastGravity.BOTTOM,
-                                      timeInSecForIosWeb: 1,
-                                      backgroundColor: Colors.grey,
-                                      textColor: Colors.white,
-                                      fontSize: 14
-                                  );
-
-                                  jumpTo(model.logicalZeroPosition);
-                                  model.positionJumpLock = false;
-                                });
-                              }
-                            }
-                          }
-                          return true;
-                        },
-
+                        onNotification: (ScrollNotification scrollInfo) => pushLoadMore(scrollInfo),
                       ),
                       onRefresh: () async {
                         await refresh();
@@ -208,5 +136,56 @@ class LoadMoreScreen extends StatelessWidget {
 
   void jumpTo(int index) =>
       loadMoreModel.itemScrollController.jumpTo(index: index);
+
+  bool pushLoadMore(ScrollNotification scrollInfo) {
+
+    // 上下どちらにスクロールしているか判定
+    if(scrollInfo.metrics.pixels - loadMoreModel.position >= loadMoreModel.sensitivityFactor){
+      // print('Axis Scroll Direction : Up');
+      loadMoreModel.position = scrollInfo.metrics.pixels;
+      loadMoreModel.positiveScroll = true;
+    }
+    if (loadMoreModel.position - scrollInfo.metrics.pixels >= loadMoreModel.sensitivityFactor){
+      // print('Axis Scroll Direction : Down');
+      loadMoreModel.position = scrollInfo.metrics.pixels;
+      loadMoreModel.positiveScroll = false;
+    }
+
+    // 上下端で追加読み込み (LoadMore)
+    if (loadMoreModel.positiveScroll) {
+      // positive load more
+      if (scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+        loadMoreModel.loadMore();
+      }
+    } else {
+      // negative load more
+      if (scrollInfo.metrics.pixels == scrollInfo.metrics.minScrollExtent) {
+        if (!loadMoreModel.positionJumpLock) {
+          // 連続で入るので読み込み後jumpするまでLock
+          loadMoreModel.positionJumpLock = true;
+          loadMoreModel.loadMoreReverse().then((_) {
+
+            showToast("Loaded more items\njump to zero position");
+
+            jumpTo(loadMoreModel.logicalZeroPosition);
+            loadMoreModel.positionJumpLock = false;
+          });
+        }
+      }
+    }
+    return true;
+  }
+
+  void showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.grey,
+      textColor: Colors.white,
+      fontSize: 14,
+    );
+  }
 
 }
