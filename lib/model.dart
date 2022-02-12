@@ -18,7 +18,8 @@ class LoadMoreModel extends ChangeNotifier {
 
   final int pagination = 20;
   int limit;
-  int offset;
+  int positiveOffset;
+  int negativeOffset;
   bool loading = false;
   bool loadingReverse = false;
 
@@ -30,43 +31,48 @@ class LoadMoreModel extends ChangeNotifier {
   }
 
   loadMore() async {
-    if (!loading) {
-      loading = true;
-      notifyListeners();
-
-      await getData();
-      loading = false;
-      notifyListeners();
+    if (loading) {
+      return;
     }
+    loading = true;
+    notifyListeners();
+
+    await getData();
+    loading = false;
+    notifyListeners();
   }
 
   loadMoreReverse() async {
-    if (!loading) {
-      loading = true;
-      notifyListeners();
-
-      await getDataReverse();
-      loading = false;
-      notifyListeners();
+    if (loading) {
+      return;
     }
+    loading = true;
+    notifyListeners();
+
+    await getDataReverse();
+    loading = false;
+    notifyListeners();
   }
 
   Future<List<String>> refresh() async {
     data.clear();
     positionJumpLock = false;
     limit = pagination;
-    offset = 0;
+    positiveOffset = 0;
+    negativeOffset = 0;
     await getData();
     return data;
   }
 
   Future<void> getData() async {
     try {
-      final fetch = await _repository.fetchData(limit: limit, offset: offset);
+      final fetch = await _repository.fetchData(limit: limit, offset: positiveOffset);
       data += fetch;
       limit += pagination;
-      offset += pagination;
+      positiveOffset += pagination;
+
     } catch (err) {
+      print(err.toString());
     } finally {
       notifyListeners();
     }
@@ -74,15 +80,16 @@ class LoadMoreModel extends ChangeNotifier {
 
   Future<void> getDataReverse() async {
     try {
-      final fetch = await _repository.fetchDataReverse(limit: limit, offset: offset);
+      final fetch = await _repository.fetchDataReverse(limit: limit, offset: negativeOffset);
 
       logicalZeroPosition = fetch.length;
       globalZeroPosition += fetch.length;
 
       data = fetch + data;
       limit += pagination;
-      offset += pagination;
+      negativeOffset += pagination;
     } catch (err) {
+      print(err.toString());
     } finally {
       notifyListeners();
     }
